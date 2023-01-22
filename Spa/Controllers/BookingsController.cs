@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Spa.Configuration;
 using Spa.Data;
 using Spa.Models;
 
@@ -13,30 +14,25 @@ namespace Spa.Controllers
     public class BookingsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public BookingsController(ApplicationDbContext context)
+        public BookingsController(ApplicationDbContext context, IUnitOfWork unitOfWork)
         {
             _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: Bookings
         public async Task<IActionResult> Index()
         {
-              return _context.Booking != null ? 
-                          View(await _context.Booking.ToListAsync()) :
-                          Problem("Entity set 'ApplicationDbContext.Booking'  is null.");
+            return View(await _unitOfWork.BookingRepository.GetAllAsync());
         }
 
         // GET: Bookings/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(int id)
         {
-            if (id == null || _context.Booking == null)
-            {
-                return NotFound();
-            }
 
-            var booking = await _context.Booking
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var booking = await _unitOfWork.BookingRepository.GetbByIdAsync(id);
             if (booking == null)
             {
                 return NotFound();
@@ -48,6 +44,7 @@ namespace Spa.Controllers
         // GET: Bookings/Create
         public IActionResult Create()
         {
+            ViewData["UserId"] = new SelectList(_context.User, "Id", "Id");
             return View();
         }
 
@@ -56,19 +53,15 @@ namespace Spa.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id")] Booking booking)
+        public async Task<IActionResult> Create([Bind("Id,TratmentName,Price,RequestedDate,RequestedTime,CreatedDate,LastUpdatedDate,UserId,UserName,BookingStatus")] Booking booking)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(booking);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(booking);
+            _unitOfWork.BookingRepository.Add(booking);
+            _unitOfWork.Commit();
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Bookings/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Edit(int id)
         {
             if (id == null || _context.Booking == null)
             {
@@ -80,6 +73,7 @@ namespace Spa.Controllers
             {
                 return NotFound();
             }
+            ViewData["UserId"] = new SelectList(_context.User, "Id", "Id", booking.UserId);
             return View(booking);
         }
 
@@ -88,7 +82,7 @@ namespace Spa.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id")] Booking booking)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,TratmentName,Price,RequestedDate,RequestedTime,CreatedDate,LastUpdatedDate,UserId,UserName,BookingStatus")] Booking booking)
         {
             if (id != booking.Id)
             {
@@ -115,11 +109,12 @@ namespace Spa.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["UserId"] = new SelectList(_context.User, "Id", "Id", booking.UserId);
             return View(booking);
         }
 
         // GET: Bookings/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Delete(int id)
         {
             if (id == null || _context.Booking == null)
             {
@@ -127,6 +122,7 @@ namespace Spa.Controllers
             }
 
             var booking = await _context.Booking
+                .Include(b => b.User)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (booking == null)
             {

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Spa.Configuration;
 using Spa.Data;
 using Spa.Models;
 
@@ -13,10 +14,12 @@ namespace Spa.Controllers
     public class BookingStatusController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public BookingStatusController(ApplicationDbContext context)
+        public BookingStatusController(ApplicationDbContext context, IUnitOfWork unitOfWork)
         {
             _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: BookingStatus

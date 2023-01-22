@@ -9,8 +9,10 @@
 
         public string Email { get; set; }
 
-        public ICollection<UserRole> Roles { get; set; }
-
         public string PassWord { get; set; }
+
+        public int RoleId { get; set; }
+        public UserRole UserRole { get; set; }
+        public ICollection<Booking> Bookings { get; set; }
     }
 }

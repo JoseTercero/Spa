@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Spa.Configuration;
 using Spa.Data;
 using Spa.Models;
 
@@ -13,30 +14,30 @@ namespace Spa.Controllers
     public class SchedulesController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public SchedulesController(ApplicationDbContext context)
+        public SchedulesController(ApplicationDbContext context, IUnitOfWork unitOfWork)
         {
             _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: Schedules
         public async Task<IActionResult> Index()
         {
-              return _context.Schedule != null ? 
-                          View(await _context.Schedule.ToListAsync()) :
-                          Problem("Entity set 'ApplicationDbContext.Schedule'  is null.");
+            
+            return View(await _unitOfWork.ScheduleRepository.GetAllAsync());
         }
 
         // GET: Schedules/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(int id)
         {
             if (id == null || _context.Schedule == null)
             {
                 return NotFound();
             }
 
-            var schedule = await _context.Schedule
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var schedule = await _unitOfWork.ScheduleRepository.GetbByIdAsync(id);
             if (schedule == null)
             {
                 return NotFound();
@@ -48,6 +49,7 @@ namespace Spa.Controllers
         // GET: Schedules/Create
         public IActionResult Create()
         {
+            ViewData["UserId"] = new SelectList(_context.User, "Id", "Id");
             return View();
         }
 
@@ -56,15 +58,11 @@ namespace Spa.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Date")] Schedule schedule)
+        public async Task<IActionResult> Create([Bind("Id,Date,UserId,TimeId")] Schedule schedule)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(schedule);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(schedule);
+            _unitOfWork.ScheduleRepository.Add(schedule);
+            _unitOfWork.Commit();
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Schedules/Edit/5
@@ -80,6 +78,7 @@ namespace Spa.Controllers
             {
                 return NotFound();
             }
+            ViewData["UserId"] = new SelectList(_context.User, "Id", "Id", schedule.UserId);
             return View(schedule);
         }
 
@@ -88,7 +87,7 @@ namespace Spa.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Date")] Schedule schedule)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Date,UserId,TimeId")] Schedule schedule)
         {
             if (id != schedule.Id)
             {
@@ -115,6 +114,7 @@ namespace Spa.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["UserId"] = new SelectList(_context.User, "Id", "Id", schedule.UserId);
             return View(schedule);
         }
 
@@ -127,6 +127,7 @@ namespace Spa.Controllers
             }
 
             var schedule = await _context.Schedule
+                .Include(s => s.User)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (schedule == null)
             {
@@ -145,19 +146,15 @@ namespace Spa.Controllers
             {
                 return Problem("Entity set 'ApplicationDbContext.Schedule'  is null.");
             }
-            var schedule = await _context.Schedule.FindAsync(id);
-            if (schedule != null)
-            {
-                _context.Schedule.Remove(schedule);
-            }
-            
-            await _context.SaveChangesAsync();
+                    
+            _unitOfWork.ScheduleRepository.Delete(id);
+            _unitOfWork.Commit();
             return RedirectToAction(nameof(Index));
         }
 
         private bool ScheduleExists(int id)
         {
-          return (_context.Schedule?.Any(e => e.Id == id)).GetValueOrDefault();
+          return _unitOfWork.ScheduleRepository.GetbByIdAsync(id) != null;
         }
     }
 }

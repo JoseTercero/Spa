@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Spa.Configuration;
 using Spa.Data;
 using Spa.Models;
 
@@ -13,10 +14,12 @@ namespace Spa.Controllers
     public class UsersController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public UsersController(ApplicationDbContext context)
+        public UsersController(ApplicationDbContext context, IUnitOfWork unitOfWork)
         {
             _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         // GET: Users
@@ -56,7 +59,7 @@ namespace Spa.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,LastNames,Email,PassWord")] User user)
+        public async Task<IActionResult> Create([Bind("Id,Name,LastNames,Email,PassWord,RoleId")] User user)
         {
             if (ModelState.IsValid)
             {
@@ -88,7 +91,7 @@ namespace Spa.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,LastNames,Email,PassWord")] User user)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,LastNames,Email,PassWord,RoleId")] User user)
         {
             if (id != user.Id)
             {
