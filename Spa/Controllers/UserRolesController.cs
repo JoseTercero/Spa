@@ -5,8 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Spa.Commands;
 using Spa.Configuration;
 using Spa.Data;
+using Spa.DTOs;
 using Spa.Models;
 
 namespace Spa.Controllers
@@ -15,6 +17,12 @@ namespace Spa.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IUnitOfWork _unitOfWork;
+
+        private readonly ICommandHandler<PermissionDTO>? _permissionCommandHandler;
+        private readonly ICommandHandler<RemoveByIdCommand>? _removeCommandHandler;
+        private readonly IQueryHandler<Permission, QueryByIdCommand>? _permissionQueryHandler;
+
+  
 
         public UserRolesController(ApplicationDbContext context, IUnitOfWork unitOfWork)
         {

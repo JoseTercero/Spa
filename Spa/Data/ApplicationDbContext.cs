@@ -24,5 +24,6 @@ namespace Spa.Data
         public DbSet<Spa.Models.BookingStatus> BookingStatus { get; set; } = default!;
         public DbSet<Spa.Models.Booking> Booking { get; set; } = default!;
 
+
     }
 }

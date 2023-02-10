@@ -17,6 +17,8 @@ namespace Spa.Configuration
         IBookingRepository BookingRepository { get; }
 
         IBookingStatusRepository BookingStatusRepository { get; }
+        IPermissionRepository Permission { get; }
+        IPermissionTypeRepository PermissionType { get; }
 
 
         void Commit();
